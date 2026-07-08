@@ -20,9 +20,9 @@ gcl_raw AS (
             ROW_NUMBER() OVER (PARTITION BY labeltaskid, document_id ORDER BY updatedat DESC) AS rn
         FROM "curated-datalake-prod".gclogs
         WHERE 
-            year >= '2025'
-            AND organization_id IN (SELECT organization_id FROM param)
+            organization_id IN (SELECT organization_id FROM param)
             AND project_id IN (SELECT project_id FROM param)
+            AND year >= '2025'
     )
     WHERE rn = 1
 ),
