@@ -27,7 +27,8 @@ issues_raw AS (
         ) AS keys_arr
     FROM "curated-datalake-prod".issues
     WHERE
-        organization_id IN (SELECT DISTINCT organization_id FROM param)
+        CAST(year AS INTEGER) >= 2025
+        AND organization_id IN (SELECT DISTINCT organization_id FROM param)
         AND project_id IN (SELECT DISTINCT project_id FROM param)
 ),
 
