@@ -128,6 +128,50 @@ tsd_final AS (
      AND c.project_id      = d.project_id
      AND c.labeltaskid     = d.labeltaskid
      AND c.document_id     = d.document_id
+),
+--project level
+class_tpo AS (
+    SELECT
+        *,
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.vehicle') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.vehicle') AS DOUBLE), 0) / 60, 1) AS vehicle_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.person') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.person') AS DOUBLE), 0) / 60, 1) AS person_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.unlabel') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.unlabel') AS DOUBLE), 0) / 60, 1) AS unlabel_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.trailer') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.trailer') AS DOUBLE), 0) / 60, 1) AS trailer_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.bulldozer') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.bulldozer') AS DOUBLE), 0) / 60, 1) AS bulldozer_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.dump_truck_cab') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.dump_truck_cab') AS DOUBLE), 0) / 60, 1) AS dump_truck_cab_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.dump_truck_trailer') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.dump_truck_trailer') AS DOUBLE), 0) / 60, 1) AS dump_truck_trailer_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.dump_truck_bed_or_trailer') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.dump_truck_bed_or_trailer') AS DOUBLE), 0) / 60, 1) AS dump_truck_bed_or_trailer_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.water_truck_cab') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.water_truck_cab') AS DOUBLE), 0) / 60, 1) AS water_truck_cab_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.other_construction_vehicle') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.other_construction_vehicle') AS DOUBLE), 0) / 60, 1) AS other_construction_vehicle_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.dump_truck_bed') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.dump_truck_bed') AS DOUBLE), 0) / 60, 1) AS dump_truck_bed_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(class_wise_tpo, '$.water_truck_trailer') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(class_object_count, '$.water_truck_trailer') AS DOUBLE), 0) / 60, 1) AS water_truck_trailer_tpo,
+
+        ROUND(duration_sec * CAST(JSON_EXTRACT_SCALAR(object_type_tpo, '$.cuboid') AS DOUBLE)
+            / NULLIF(CAST(JSON_EXTRACT_SCALAR(object_type_object_count, '$.cuboid') AS DOUBLE), 0) / 60, 1) AS cuboid_tpo
+    FROM tsd_final
 )
-SELECT *
-FROM tsd_final
+SELECT * 
+FROM class_tpo
