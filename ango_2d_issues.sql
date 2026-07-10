@@ -29,7 +29,7 @@ issues_raw AS (
     WHERE
         organization_id IN (SELECT DISTINCT organization_id FROM param)
         AND project_id IN (SELECT DISTINCT project_id FROM param)
-        AND year >= 2025
+        AND year >= '2025'
 ),
 
 -- Project Specific Aggregation --> Every Project has different Error --> hardcoded per project taxonomy
