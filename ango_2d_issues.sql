@@ -12,7 +12,7 @@ param AS (
 ),
 
 issues_raw AS (
-    SELECT
+    SELECT 
         organization_id,
         project_id,
         labeltaskid,
@@ -20,19 +20,17 @@ issues_raw AS (
         status,
         deleted,
         FROM_UNIXTIME(updatedat + 19500) AS updatedat_date,
-        -- keys_arr kept as ARRAY(varchar), reused via contains() below;
-        -- avoids array_join -> split round trip re-splitting the same string 12x/row
         array_distinct(
             transform(cast(json_parse(error_code) AS array(json)), x -> json_extract_scalar(x, '$.key'))
         ) AS keys_arr
-    FROM "curated-datalake-prod".issues
-    WHERE
-        organization_id IN (SELECT DISTINCT organization_id FROM param)
-        AND project_id IN (SELECT DISTINCT project_id FROM param)
-        AND year >= '2025'
+        -- content, content_mentions dropped — not used anywhere downstream (rule #1)
+    FROM "curated-datalake-prod".issues i
+    JOIN param p 
+      ON i.organization_id = p.organization_id 
+     AND i.project_id = p.project_id
+    WHERE i.year >= '2025'
 ),
 
--- Project Specific Aggregation --> Every Project has different Error --> hardcoded per project taxonomy
 issues_agg AS (
     SELECT
         DATE(updatedat_date) AS updatedat_date,
@@ -43,8 +41,6 @@ issues_agg AS (
         COUNT(DISTINCT issue_id) FILTER (WHERE status = 'Open') AS open_issues,
         COUNT(DISTINCT issue_id) FILTER (WHERE status = 'Resolved') AS resolved_issues,
         COUNT(DISTINCT issue_id) FILTER (WHERE deleted = true) AS deleted_issues,
-
-        -- Project Specific
         COUNT(DISTINCT CASE WHEN contains(keys_arr, 'Wrong Tool') THEN issue_id END) AS wrong_tool,
         COUNT(DISTINCT CASE WHEN contains(keys_arr, 'Wrong') THEN issue_id END) AS wrong,
         COUNT(DISTINCT CASE WHEN contains(keys_arr, 'TMP-01 | Timestamp Outside Window') THEN issue_id END) AS tmp_01,
@@ -58,10 +54,11 @@ issues_agg AS (
         COUNT(DISTINCT CASE WHEN contains(keys_arr, 'CLS-01 | Wrong Class') THEN issue_id END) AS cls_01,
         COUNT(DISTINCT CASE WHEN contains(keys_arr, 'ATR-03 | Wrong Soil Humidity') THEN issue_id END) AS atr_03,
         COUNT(DISTINCT CASE WHEN contains(keys_arr, 'ATR-01 | Wrong Soil Type') THEN issue_id END) AS atr_01
-
     FROM issues_raw
     GROUP BY 1, 2, 3, 4
-    ORDER BY 1 DESC
+    -- ORDER BY removed from CTE — Trino doesn't guarantee it survives to outer query;
+    -- wastes a sort pass here. Add ORDER BY on the final outer SELECT instead if needed.
 )
-SELECT *
-FROM issues_agg
+
+SELECT * FROM issues_agg
+ORDER BY updatedat_date DESC
