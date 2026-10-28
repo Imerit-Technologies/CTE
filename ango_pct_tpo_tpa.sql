@@ -3,8 +3,7 @@ param AS (
     SELECT organization_id, project_id
     FROM (
         VALUES 
-            -- ROW('6a212cd9e77b76403502fa3a', '6a212e91607ae00e04e31b6c')
-            ROW('6aabefcae88bf8dba3ac0c1d', '6aabeff4e88bf8dba3ac0c22')
+            ROW('6a36c2b8719c08445d20faa8', '6acc8621c2d5a610c212c8a0')
     ) AS t(organization_id, project_id)
 ),
 -- Ratio Calculation starts here --
@@ -273,6 +272,8 @@ base AS (
         g.stage,
         g.stage_type,
         g.stagename,
+        ROW_NUMBER() OVER (PARTITION BY t.project_id, t.labeltaskid ORDER BY t.end_time) AS stage_flow,
+        ROW_NUMBER() OVER (PARTITION BY t.project_id, t.labeltaskid, g.stagename ORDER BY t.end_time) AS node_iteration,
         t.duration,
         
         a.total_shapes,
@@ -315,6 +316,10 @@ final AS (
         b.stage,
         b.stage_type,
         b.stagename,
+        
+        b.stage_flow,
+        CONCAT(stagename, '_', CAST(b.node_iteration AS VARCHAR)) AS stage_iteration,
+        
         b.duration,
         
         b.total_shapes,
@@ -335,5 +340,6 @@ final AS (
     JOIN tsd_final t ON b.document_id = t.document_id
         
 )
+
 SELECT *
 FROM final
